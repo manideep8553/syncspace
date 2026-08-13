@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DocumentType {
+  CODE
+  WHITEBOARD
+}
+
+enum MemberRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String   @map("password_hash")
+  avatarUrl    String?  @map("avatar_url")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  ownedWorkspaces Workspace[]      @relation("WorkspaceOwner")
+  memberships     WorkspaceMember[]
+  ownedDocuments  Document[]       @relation("DocumentOwner")
+
+  @@map("users")
+}
+
+model Workspace {
+  id        String  @id @default(cuid())
+  name      String
+  ownerId   String  @map("owner_id")
+  owner     User    @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members   WorkspaceMember[]
+  documents Document[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String     @id @default(cuid())
+  workspaceId String     @map("workspace_id")
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String     @map("user_id")
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        MemberRole @default(EDITOR)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([workspaceId, userId])
+  @@map("workspace_members")
+}
+
+model Document {
+  id          String       @id @default(cuid())
+  title       String       @default("Untitled document")
+  type        DocumentType @default(CODE)
+  content     String?
+  workspaceId String       @map("workspace_id")
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  ownerId     String       @map("owner_id")
+  owner       User         @relation("DocumentOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([workspaceId])
+  @@map("documents")
+}
