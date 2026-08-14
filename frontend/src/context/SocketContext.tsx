@@ -11,7 +11,7 @@ import {
 import type { Socket } from 'socket.io-client';
 import { connectSocket, disconnectSocket } from '../lib/socket';
 import { useAuth } from '../hooks/useAuth';
-import type { PresenceUser } from '../types/models';
+import type { PresenceUser, RoomBroadcastEvent, RoomMessage } from '../types/models';
 
 export interface RemoteCursor {
   user: PresenceUser;
@@ -24,10 +24,18 @@ interface SocketContextValue {
   connected: boolean;
   peers: PresenceUser[];
   cursors: Record<string, RemoteCursor>;
+  roomMembers: Record<string, PresenceUser[]>;
+  roomMessages: Record<string, RoomMessage[]>;
+  roomBroadcasts: Record<string, RoomBroadcastEvent[]>;
   joinDocument: (docId: string) => void;
   sendCursor: (x: number, y: number) => void;
   sendTyping: (isTyping: boolean) => void;
   notifyDocumentUpdated: () => void;
+  joinRoom: (roomId: string) => void;
+  leaveRoom: (roomId: string) => void;
+  sendRoomMessage: (roomId: string, text: string) => void;
+  broadcastRoomEvent: (roomId: string, event: string, data?: unknown) => void;
+  clearRoomActivity: () => void;
 }
 
 export const SocketContext = createContext<SocketContextValue | undefined>(undefined);
@@ -38,6 +46,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const [connected, setConnected] = useState(false);
   const [peers, setPeers] = useState<PresenceUser[]>([]);
   const [cursors, setCursors] = useState<Record<string, RemoteCursor>>({});
+  const [roomMembers, setRoomMembers] = useState<Record<string, PresenceUser[]>>({});
+  const [roomMessages, setRoomMessages] = useState<Record<string, RoomMessage[]>>({});
+  const [roomBroadcasts, setRoomBroadcasts] = useState<Record<string, RoomBroadcastEvent[]>>({});
   const joinedDocRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -47,6 +58,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       setConnected(false);
       setPeers([]);
       setCursors({});
+      setRoomMembers({});
+      setRoomMessages({});
+      setRoomBroadcasts({});
       joinedDocRef.current = null;
       return;
     }
@@ -60,6 +74,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       setConnected(false);
       setPeers([]);
       setCursors({});
+      setRoomMembers({});
+      setRoomMessages({});
+      setRoomBroadcasts({});
     };
     const onPresenceList = (list: PresenceUser[]) => {
       setPeers(list.filter((presence) => presence.userId !== user.id));
@@ -84,6 +101,48 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       if (cursor.user.userId === user.id) return;
       setCursors((prev) => ({ ...prev, [cursor.user.userId]: cursor }));
     };
+    const onRoomMembers = ({ roomId, members }: { roomId: string; members: PresenceUser[] }) => {
+      setRoomMembers((prev) => ({
+        ...prev,
+        [roomId]: members.filter((member) => member.userId !== user.id),
+      }));
+    };
+    const onRoomMemberJoined = ({
+      roomId,
+      user: member,
+    }: {
+      roomId: string;
+      user: PresenceUser;
+    }) => {
+      if (member.userId === user.id) return;
+      setRoomMembers((prev) => {
+        const current = prev[roomId] ?? [];
+        return {
+          ...prev,
+          [roomId]: current.some((m) => m.userId === member.userId)
+            ? current
+            : [...current, member],
+        };
+      });
+    };
+    const onRoomMemberLeft = ({ roomId, user: member }: { roomId: string; user: PresenceUser }) => {
+      setRoomMembers((prev) => {
+        const current = prev[roomId] ?? [];
+        return { ...prev, [roomId]: current.filter((m) => m.userId !== member.userId) };
+      });
+    };
+    const onRoomMessage = (message: RoomMessage) => {
+      setRoomMessages((prev) => ({
+        ...prev,
+        [message.roomId]: [...(prev[message.roomId] ?? []), message].slice(-100),
+      }));
+    };
+    const onRoomBroadcast = (event: RoomBroadcastEvent) => {
+      setRoomBroadcasts((prev) => ({
+        ...prev,
+        [event.roomId]: [...(prev[event.roomId] ?? []), event].slice(-50),
+      }));
+    };
 
     s.on('connect', onConnect);
     s.on('disconnect', onDisconnect);
@@ -92,6 +151,11 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     s.on('presence:left', onPresenceLeft);
     s.on('presence:update', onPresenceUpdate);
     s.on('cursor:move', onCursorMove);
+    s.on('room:members', onRoomMembers);
+    s.on('room:member_joined', onRoomMemberJoined);
+    s.on('room:member_left', onRoomMemberLeft);
+    s.on('room:message', onRoomMessage);
+    s.on('room:broadcast', onRoomBroadcast);
 
     // Re-join the document if the socket ever reconnects mid-session.
     if (joinedDocRef.current) {
@@ -106,13 +170,21 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       s.off('presence:left', onPresenceLeft);
       s.off('presence:update', onPresenceUpdate);
       s.off('cursor:move', onCursorMove);
+      s.off('room:members', onRoomMembers);
+      s.off('room:member_joined', onRoomMemberJoined);
+      s.off('room:member_left', onRoomMemberLeft);
+      s.off('room:message', onRoomMessage);
+      s.off('room:broadcast', onRoomBroadcast);
     };
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps -- `user` object identity stable across renders
 
-  const joinDocument = useCallback((docId: string) => {
-    joinedDocRef.current = docId;
-    socket?.emit('doc:join', docId);
-  }, [socket]);
+  const joinDocument = useCallback(
+    (docId: string) => {
+      joinedDocRef.current = docId;
+      socket?.emit('doc:join', docId);
+    },
+    [socket]
+  );
 
   const sendCursor = useCallback(
     (x: number, y: number) => {
@@ -132,18 +204,77 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     socket?.emit('doc:updated');
   }, [socket]);
 
+  const joinRoom = useCallback(
+    (roomId: string) => {
+      socket?.emit('room:join', roomId);
+    },
+    [socket]
+  );
+
+  const leaveRoom = useCallback(
+    (roomId: string) => {
+      socket?.emit('room:leave', roomId);
+    },
+    [socket]
+  );
+
+  const sendRoomMessage = useCallback(
+    (roomId: string, text: string) => {
+      socket?.emit('room:message', { roomId, text });
+    },
+    [socket]
+  );
+
+  const broadcastRoomEvent = useCallback(
+    (roomId: string, event: string, data?: unknown) => {
+      socket?.emit('room:broadcast', { roomId, event, data });
+    },
+    [socket]
+  );
+
+  const clearRoomActivity = useCallback(() => {
+    setRoomMembers({});
+    setRoomMessages({});
+    setRoomBroadcasts({});
+  }, []);
+
   const value = useMemo(
     () => ({
       socket,
       connected,
       peers,
       cursors,
+      roomMembers,
+      roomMessages,
+      roomBroadcasts,
       joinDocument,
       sendCursor,
       sendTyping,
       notifyDocumentUpdated,
+      joinRoom,
+      leaveRoom,
+      sendRoomMessage,
+      broadcastRoomEvent,
+      clearRoomActivity,
     }),
-    [socket, connected, peers, cursors, joinDocument, sendCursor, sendTyping, notifyDocumentUpdated]
+    [
+      socket,
+      connected,
+      peers,
+      cursors,
+      roomMembers,
+      roomMessages,
+      roomBroadcasts,
+      joinDocument,
+      sendCursor,
+      sendTyping,
+      notifyDocumentUpdated,
+      joinRoom,
+      leaveRoom,
+      sendRoomMessage,
+      broadcastRoomEvent,
+      clearRoomActivity,
+    ]
   );
 
   return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;

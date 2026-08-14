@@ -34,7 +34,9 @@ export type PublicUser = {
   createdAt: Date;
 };
 
-export async function registerUser(input: RegisterInput): Promise<{ user: PublicUser; token: string }> {
+export async function registerUser(
+  input: RegisterInput
+): Promise<{ user: PublicUser; token: string }> {
   const existing = await prisma.user.findUnique({ where: { email: input.email } });
   if (existing) {
     throw new ApiError(409, 'An account with this email already exists');

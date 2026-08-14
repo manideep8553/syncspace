@@ -60,7 +60,9 @@ export function RegisterForm() {
       </Button>
       <p className="muted" style={{ textAlign: 'center', margin: 0 }}>
         Already have an account?{' '}
-        <Link to="/login" style={{ color: 'var(--accent)' }}>Sign in</Link>
+        <Link to="/login" style={{ color: 'var(--accent)' }}>
+          Sign in
+        </Link>
       </p>
     </form>
   );

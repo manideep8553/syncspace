@@ -106,7 +106,11 @@ export function RoomsPage() {
         <Button type="submit" variant="default" loading={joining}>
           Join room
         </Button>
-        {joinError && <span className="error-text" style={{ fontSize: 13 }}>{joinError}</span>}
+        {joinError && (
+          <span className="error-text" style={{ fontSize: 13 }}>
+            {joinError}
+          </span>
+        )}
       </form>
 
       {rooms.length === 0 ? (
@@ -121,12 +125,21 @@ export function RoomsPage() {
         <>
           {mine.length > 0 && (
             <>
-              <h2 className="muted" style={{ fontSize: 15, fontWeight: 700, margin: '28px 0 12px' }}>
+              <h2
+                className="muted"
+                style={{ fontSize: 15, fontWeight: 700, margin: '28px 0 12px' }}
+              >
                 Your rooms
               </h2>
               <div className="grid-2">
                 {mine.map((room) => (
-                  <RoomCard key={room.id} room={room} onJoin={join} onLeave={leave} busy={busyRoomId === room.id} />
+                  <RoomCard
+                    key={room.id}
+                    room={room}
+                    onJoin={join}
+                    onLeave={leave}
+                    busy={busyRoomId === room.id}
+                  />
                 ))}
               </div>
             </>
@@ -134,12 +147,21 @@ export function RoomsPage() {
 
           {others.length > 0 && (
             <>
-              <h2 className="muted" style={{ fontSize: 15, fontWeight: 700, margin: '28px 0 12px' }}>
+              <h2
+                className="muted"
+                style={{ fontSize: 15, fontWeight: 700, margin: '28px 0 12px' }}
+              >
                 Available rooms
               </h2>
               <div className="grid-2">
                 {others.map((room) => (
-                  <RoomCard key={room.id} room={room} onJoin={join} onLeave={leave} busy={busyRoomId === room.id} />
+                  <RoomCard
+                    key={room.id}
+                    room={room}
+                    onJoin={join}
+                    onLeave={leave}
+                    busy={busyRoomId === room.id}
+                  />
                 ))}
               </div>
             </>

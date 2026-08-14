@@ -50,6 +50,10 @@ export async function updateRole(req: Request, res: Response) {
 }
 
 export async function removeMember(req: Request, res: Response) {
-  await removeMemberFromWorkspace(String(req.params.workspaceId), String(req.params.memberId), req.userId);
+  await removeMemberFromWorkspace(
+    String(req.params.workspaceId),
+    String(req.params.memberId),
+    req.userId
+  );
   res.status(204).end();
 }

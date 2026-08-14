@@ -20,7 +20,10 @@ export function Avatar({ name, color, size }: AvatarProps) {
     backgroundColor: color ?? userColor(name),
   };
   return (
-    <span className={cn('avatar', size === 'sm' && 'avatar-sm', size === 'lg' && 'avatar-lg')} style={style}>
+    <span
+      className={cn('avatar', size === 'sm' && 'avatar-sm', size === 'lg' && 'avatar-lg')}
+      style={style}
+    >
       {initials(name)}
     </span>
   );

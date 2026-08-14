@@ -68,11 +68,7 @@ export function HomePage() {
         <div className="empty">
           <p className="empty-title">No workspaces yet</p>
           <p>Create a workspace to invite teammates and start collaborating.</p>
-          <Button
-            variant="primary"
-            className="mt-2"
-            onClick={() => setShowCreate(true)}
-          >
+          <Button variant="primary" className="mt-2" onClick={() => setShowCreate(true)}>
             Create your first workspace
           </Button>
         </div>

@@ -33,7 +33,12 @@ export function CreateWorkspaceModal({ open, onClose, onCreated }: CreateWorkspa
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="New workspace" subtitle="A workspace groups your collaborative documents and teammates.">
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="New workspace"
+      subtitle="A workspace groups your collaborative documents and teammates."
+    >
       <form onSubmit={handleSubmit} className="form-stack">
         {error && <div className="error-banner">{error}</div>}
         <Input

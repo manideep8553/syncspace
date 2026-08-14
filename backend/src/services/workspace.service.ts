@@ -98,7 +98,12 @@ export async function addMemberToWorkspace(
   });
 }
 
-export async function updateMemberRole(workspaceId: string, memberId: string, role: 'EDITOR' | 'VIEWER', requesterId: string) {
+export async function updateMemberRole(
+  workspaceId: string,
+  memberId: string,
+  role: 'EDITOR' | 'VIEWER',
+  requesterId: string
+) {
   await assertCanManage(workspaceId, requesterId);
 
   const member = await prisma.workspaceMember.findUnique({ where: { id: memberId } });
@@ -116,7 +121,11 @@ export async function updateMemberRole(workspaceId: string, memberId: string, ro
   });
 }
 
-export async function removeMemberFromWorkspace(workspaceId: string, memberId: string, requesterId: string) {
+export async function removeMemberFromWorkspace(
+  workspaceId: string,
+  memberId: string,
+  requesterId: string
+) {
   await assertCanManage(workspaceId, requesterId);
 
   const member = await prisma.workspaceMember.findUnique({ where: { id: memberId } });
@@ -131,7 +140,10 @@ export async function removeMemberFromWorkspace(workspaceId: string, memberId: s
 }
 
 export async function deleteWorkspace(workspaceId: string, requesterId: string) {
-  const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { ownerId: true } });
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    select: { ownerId: true },
+  });
   if (!workspace) {
     throw new ApiError(404, 'Workspace not found');
   }

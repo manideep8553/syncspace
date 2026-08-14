@@ -8,6 +8,7 @@ import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { RoomPage } from './pages/RoomPage';
 import { RoomsPage } from './pages/RoomsPage';
 import { WhiteboardPage } from './pages/WhiteboardPage';
 import { WorkspacePage } from './pages/WorkspacePage';
@@ -25,6 +26,7 @@ export default function App() {
               <Route element={<AppShell />}>
                 <Route index element={<HomePage />} />
                 <Route path="rooms" element={<RoomsPage />} />
+                <Route path="rooms/:roomId" element={<RoomPage />} />
                 <Route path="w/:workspaceId" element={<WorkspacePage />} />
               </Route>
               <Route path="doc/:documentId" element={<CodeEditorPage />} />

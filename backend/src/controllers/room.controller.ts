@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import {
   createRoom,
+  getRoom,
   joinRoom,
   leaveRoom,
   listRooms,
@@ -9,6 +10,12 @@ import {
 
 export async function list(req: Request, res: Response) {
   const data = await listRooms(req.userId);
+  res.json({ success: true, data });
+}
+
+export async function get(req: Request, res: Response) {
+  const { roomId } = req.validated.params as unknown as { roomId: string };
+  const data = await getRoom(roomId, req.userId);
   res.json({ success: true, data });
 }
 

@@ -21,7 +21,15 @@ export interface BoardShape {
   rotation?: number;
 }
 
-export const STROKE_COLORS = ['#0f172a', '#ef4444', '#f59e0b', '#10b981', '#0ea5e9', '#8b5cf6', '#ec4899'];
+export const STROKE_COLORS = [
+  '#0f172a',
+  '#ef4444',
+  '#f59e0b',
+  '#10b981',
+  '#0ea5e9',
+  '#8b5cf6',
+  '#ec4899',
+];
 export const FILL_COLORS = [
   'transparent',
   'rgba(99,102,241,0.15)',
@@ -41,7 +49,14 @@ export function newShapeId(): string {
   return `shape-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function createDefaultShape(type: ShapeType, x: number, y: number, stroke: string, fill: string, strokeWidth: number): BoardShape {
+export function createDefaultShape(
+  type: ShapeType,
+  x: number,
+  y: number,
+  stroke: string,
+  fill: string,
+  strokeWidth: number
+): BoardShape {
   const base = { id: newShapeId(), type, x, y, rotation: 0, stroke, fill, strokeWidth };
   switch (type) {
     case 'rect':

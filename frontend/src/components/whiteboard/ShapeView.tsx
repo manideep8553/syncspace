@@ -12,7 +12,15 @@ interface ShapeViewProps {
   registerRef: (id: string, node: ComponentRef<typeof Group> | null) => void;
 }
 
-export function ShapeView({ shape, tool, selected, onSelect, onEditText, onChange, registerRef }: ShapeViewProps) {
+export function ShapeView({
+  shape,
+  tool,
+  selected,
+  onSelect,
+  onEditText,
+  onChange,
+  registerRef,
+}: ShapeViewProps) {
   const strokeWidth = shape.strokeWidth ?? 2;
   const stroke = shape.stroke ?? '#0f172a';
   const isSelectable = tool === 'select';

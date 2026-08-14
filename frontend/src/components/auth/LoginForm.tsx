@@ -50,7 +50,10 @@ export function LoginForm() {
         Sign in
       </Button>
       <p className="muted" style={{ textAlign: 'center', margin: 0 }}>
-        No account yet? <Link to="/register" style={{ color: 'var(--accent)' }}>Create one</Link>
+        No account yet?{' '}
+        <Link to="/register" style={{ color: 'var(--accent)' }}>
+          Create one
+        </Link>
       </p>
     </form>
   );

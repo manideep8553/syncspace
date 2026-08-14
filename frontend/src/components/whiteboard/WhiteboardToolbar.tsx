@@ -101,7 +101,12 @@ export function WhiteboardToolbar({
             key={color}
             type="button"
             className={cn('color-swatch', fillColor === color && 'active')}
-            style={{ backgroundColor: color === 'transparent' ? 'repeating-conic-gradient(#888 0% 25%, #fff 0% 50%) 50% / 8px 8px' : color }}
+            style={{
+              backgroundColor:
+                color === 'transparent'
+                  ? 'repeating-conic-gradient(#888 0% 25%, #fff 0% 50%) 50% / 8px 8px'
+                  : color,
+            }}
             onClick={() => onFillColor(color)}
             aria-label={`Fill ${color}`}
           />

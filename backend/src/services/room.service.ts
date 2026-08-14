@@ -39,10 +39,7 @@ function generateRoomCode(): string {
 }
 
 function isUniqueViolation(error: unknown): boolean {
-  return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === 'P2002'
-  );
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
 }
 
 async function findRoomSummary(roomId: string, userId: string) {
@@ -60,7 +57,13 @@ async function findRoomSummary(roomId: string, userId: string) {
   return toRoomSummary(room);
 }
 
-function toRoomSummary(room: Room & { owner: { id: string; name: string; email: string; avatarUrl: string | null }; members: Array<{ userId: string; role: string }>; _count: { members: number } }) {
+function toRoomSummary(
+  room: Room & {
+    owner: { id: string; name: string; email: string; avatarUrl: string | null };
+    members: Array<{ userId: string; role: string }>;
+    _count: { members: number };
+  }
+) {
   const { _count, members, ...rest } = room;
   const membership = members[0] ?? null;
   return {
@@ -112,6 +115,25 @@ export async function createRoom(name: string, ownerId: string) {
       role: 'OWNER' as const,
     };
   });
+}
+
+export async function getRoom(roomId: string, userId: string) {
+  const room = await prisma.room.findUnique({
+    where: { id: roomId },
+    include: {
+      owner: { select: { id: true, name: true, email: true, avatarUrl: true } },
+      members: { select: { userId: true, role: true }, where: { userId } },
+      _count: { select: { members: true } },
+    },
+  });
+  if (!room) {
+    throw new ApiError(404, 'Room not found');
+  }
+  const summary = toRoomSummary(room);
+  if (!summary.isMember) {
+    throw new ApiError(403, 'You are not a member of this room');
+  }
+  return summary;
 }
 
 export async function joinRoom(code: string, userId: string) {

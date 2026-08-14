@@ -9,7 +9,11 @@ export function Input({ label, className, id, ...rest }: InputProps) {
   const inputId = id ?? rest.name;
   return (
     <div>
-      {label && <label className="label" htmlFor={inputId}>{label}</label>}
+      {label && (
+        <label className="label" htmlFor={inputId}>
+          {label}
+        </label>
+      )}
       <input id={inputId} className={cn('input', className)} {...rest} />
     </div>
   );

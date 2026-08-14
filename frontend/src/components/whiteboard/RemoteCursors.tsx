@@ -28,7 +28,14 @@ export function RemoteCursors({ cursors, transform }: RemoteCursorsProps) {
               pointerLength={10}
               pointerWidth={8}
             />
-            <Circle x={x} y={y} radius={5} fill={cursor.user.color} stroke="#fff" strokeWidth={1.5} />
+            <Circle
+              x={x}
+              y={y}
+              radius={5}
+              fill={cursor.user.color}
+              stroke="#fff"
+              strokeWidth={1.5}
+            />
             <KonvaText
               text={cursor.user.name}
               x={x + 6}

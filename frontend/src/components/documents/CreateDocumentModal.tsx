@@ -14,7 +14,12 @@ interface CreateDocumentModalProps {
   onCreated: () => void;
 }
 
-export function CreateDocumentModal({ workspaceId, open, onClose, onCreated }: CreateDocumentModalProps) {
+export function CreateDocumentModal({
+  workspaceId,
+  open,
+  onClose,
+  onCreated,
+}: CreateDocumentModalProps) {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [type, setType] = useState<DocumentType>('CODE');
@@ -38,7 +43,12 @@ export function CreateDocumentModal({ workspaceId, open, onClose, onCreated }: C
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="New document" subtitle="Create a collaborative document in this workspace.">
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="New document"
+      subtitle="Create a collaborative document in this workspace."
+    >
       <form onSubmit={handleSubmit} className="form-stack">
         {error && <div className="error-banner">{error}</div>}
         <Input

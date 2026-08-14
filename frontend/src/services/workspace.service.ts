@@ -1,5 +1,10 @@
 import { api } from '../lib/http';
-import type { MemberRole, WorkspaceDetail, WorkspaceMember, WorkspaceSummary } from '../types/models';
+import type {
+  MemberRole,
+  WorkspaceDetail,
+  WorkspaceMember,
+  WorkspaceSummary,
+} from '../types/models';
 
 export const workspaceService = {
   list: () => api.get<WorkspaceSummary[]>('/workspaces'),

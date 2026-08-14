@@ -16,6 +16,22 @@ interface SocketData {
   userId: string;
   presence?: PresenceUser;
   docId?: string;
+  roomIds: Set<string>;
+}
+
+export interface RoomMessage {
+  roomId: string;
+  user: PresenceUser;
+  text: string;
+  at: number;
+}
+
+export interface RoomBroadcastEvent {
+  roomId: string;
+  event: string;
+  data: unknown;
+  user: PresenceUser;
+  at: number;
 }
 
 const avatarColors = [
@@ -58,6 +74,7 @@ export function attachSocketServer(server: http.Server): IOServer {
 
   io.on('connection', async (socket) => {
     const data = socket.data as SocketData;
+    data.roomIds = new Set<string>();
     const user = await prisma.user.findUnique({
       where: { id: data.userId },
       select: { id: true, name: true, email: true, avatarUrl: true },
@@ -123,7 +140,9 @@ export function attachSocketServer(server: http.Server): IOServer {
     socket.on('typing', (isTyping: boolean) => {
       const docId = data.docId;
       if (docId && data.presence) {
-        socket.to(`doc:${docId}`).emit('typing', { user: data.presence, isTyping: Boolean(isTyping) });
+        socket
+          .to(`doc:${docId}`)
+          .emit('typing', { user: data.presence, isTyping: Boolean(isTyping) });
       }
     });
 
@@ -134,10 +153,83 @@ export function attachSocketServer(server: http.Server): IOServer {
       }
     });
 
+    socket.on('room:join', async (roomId: string, ack?: (ok: boolean) => void) => {
+      if (typeof roomId !== 'string' || !roomId) {
+        ack?.(false);
+        return;
+      }
+      const membership = await prisma.roomMember.findUnique({
+        where: { roomId_userId: { roomId, userId: data.userId } },
+      });
+      if (!membership) {
+        ack?.(false);
+        return;
+      }
+
+      data.roomIds.add(roomId);
+      await socket.join(`room:${roomId}`);
+      ack?.(true);
+
+      socket.emit('room:members', { roomId, members: await getRoomMembers(io, roomId) });
+      socket.to(`room:${roomId}`).emit('room:member_joined', { roomId, user: data.presence });
+    });
+
+    socket.on('room:leave', async (roomId: string, ack?: (ok: boolean) => void) => {
+      if (typeof roomId !== 'string' || !roomId) {
+        ack?.(false);
+        return;
+      }
+      data.roomIds.delete(roomId);
+      await socket.leave(`room:${roomId}`);
+      ack?.(true);
+      socket.to(`room:${roomId}`).emit('room:member_left', { roomId, user: data.presence });
+    });
+
+    socket.on('room:message', (payload: { roomId?: string; text?: unknown }) => {
+      const roomId = payload?.roomId;
+      const text = payload?.text;
+      if (
+        typeof roomId !== 'string' ||
+        !data.roomIds.has(roomId) ||
+        typeof text !== 'string' ||
+        text.trim().length === 0
+      ) {
+        return;
+      }
+      const message: RoomMessage = {
+        roomId,
+        user: data.presence!,
+        text: text.slice(0, 4000),
+        at: Date.now(),
+      };
+      io.to(`room:${roomId}`).emit('room:message', message);
+    });
+
+    socket.on('room:broadcast', (payload: { roomId?: string; event?: string; data?: unknown }) => {
+      const roomId = payload?.roomId;
+      if (typeof roomId !== 'string' || !data.roomIds.has(roomId)) {
+        return;
+      }
+      const event: RoomBroadcastEvent = {
+        roomId,
+        event:
+          typeof payload?.event === 'string' && payload.event.length > 0 ? payload.event : 'event',
+        data: payload?.data ?? null,
+        user: data.presence!,
+        at: Date.now(),
+      };
+      io.to(`room:${roomId}`).emit('room:broadcast', event);
+    });
+
     socket.on('disconnect', () => {
       const docId = data.docId;
-      if (docId && data.presence) {
-        socket.to(`doc:${docId}`).emit('presence:left', data.presence);
+      if (data.presence) {
+        if (docId) {
+          socket.to(`doc:${docId}`).emit('presence:left', data.presence);
+        }
+        for (const roomId of data.roomIds) {
+          io.to(`room:${roomId}`).emit('room:member_left', { roomId, user: data.presence });
+        }
       }
     });
   });
@@ -147,6 +239,13 @@ export function attachSocketServer(server: http.Server): IOServer {
 
 async function getPeers(io: IOServer, docId: string): Promise<PresenceUser[]> {
   const sockets = await io.in(`doc:${docId}`).fetchSockets();
+  return sockets
+    .map((socket) => (socket.data as SocketData).presence)
+    .filter((presence): presence is PresenceUser => presence !== undefined);
+}
+
+async function getRoomMembers(io: IOServer, roomId: string): Promise<PresenceUser[]> {
+  const sockets = await io.in(`room:${roomId}`).fetchSockets();
   return sockets
     .map((socket) => (socket.data as SocketData).presence)
     .filter((presence): presence is PresenceUser => presence !== undefined);

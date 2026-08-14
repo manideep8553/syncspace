@@ -89,18 +89,19 @@ export function WorkspacePage() {
     <div className="app-content">
       <div className="page-header">
         <div>
-          <Link to="/" className="faint" style={{ fontSize: 13 }}>← All workspaces</Link>
-          <h1 className="page-title" style={{ marginTop: 4 }}>{workspace.name}</h1>
+          <Link to="/" className="faint" style={{ fontSize: 13 }}>
+            ← All workspaces
+          </Link>
+          <h1 className="page-title" style={{ marginTop: 4 }}>
+            {workspace.name}
+          </h1>
           <p className="muted" style={{ margin: 0 }}>
             {workspace.documentCount} documents · {workspace.members.length} members
           </p>
         </div>
         <div className="flex items-center gap-2">
           {isOwner && (
-            <Button
-              variant="ghost"
-              onClick={() => setShowConfirmDelete(true)}
-            >
+            <Button variant="ghost" onClick={() => setShowConfirmDelete(true)}>
               Delete workspace
             </Button>
           )}
@@ -139,9 +140,13 @@ export function WorkspacePage() {
             <Avatar name={member.user.name} size="sm" color={undefined} />
             <div style={{ flex: 1, marginLeft: 10 }}>
               <div style={{ fontWeight: 600, fontSize: 13 }}>{member.user.name}</div>
-              <div className="faint" style={{ fontSize: 12 }}>{member.user.email}</div>
+              <div className="faint" style={{ fontSize: 12 }}>
+                {member.user.email}
+              </div>
             </div>
-            <span className={`badge ${member.role === 'OWNER' ? 'badge-green' : ''}`}>{member.role}</span>
+            <span className={`badge ${member.role === 'OWNER' ? 'badge-green' : ''}`}>
+              {member.role}
+            </span>
             {isOwner && member.role !== 'OWNER' && (
               <Button
                 variant="ghost"
@@ -179,7 +184,9 @@ export function WorkspacePage() {
       >
         <form onSubmit={handleInvite} className="form-stack">
           {inviteError && <div className="error-banner">{inviteError}</div>}
-          <label className="label" htmlFor="invite-email">Email</label>
+          <label className="label" htmlFor="invite-email">
+            Email
+          </label>
           <input
             id="invite-email"
             className="input"

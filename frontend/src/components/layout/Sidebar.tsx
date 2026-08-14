@@ -32,22 +32,17 @@ export function Sidebar() {
 
       <div className="sidebar-section">Navigation</div>
       <div className="sidebar-list">
-        <NavLink
-          to="/"
-          end
-          className={({ isActive }) => cn('sidebar-item', isActive && 'active')}
-        >
+        <NavLink to="/" end className={({ isActive }) => cn('sidebar-item', isActive && 'active')}>
           <span>Home</span>
         </NavLink>
 
-        <NavLink
-          to="/rooms"
-          className={({ isActive }) => cn('sidebar-item', isActive && 'active')}
-        >
+        <NavLink to="/rooms" className={({ isActive }) => cn('sidebar-item', isActive && 'active')}>
           <span>Rooms</span>
         </NavLink>
 
-        <div className="sidebar-section" style={{ paddingTop: 18 }}>Workspaces</div>
+        <div className="sidebar-section" style={{ paddingTop: 18 }}>
+          Workspaces
+        </div>
         {workspaces.length === 0 && (
           <p className="faint" style={{ padding: '4px 12px', fontSize: 13 }}>
             No workspaces yet.
@@ -73,7 +68,10 @@ export function Sidebar() {
           <Avatar name={user.name} size="sm" />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 600, fontSize: 13 }}>{user.name}</div>
-            <div className="faint" style={{ fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div
+              className="faint"
+              style={{ fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis' }}
+            >
               {user.email}
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { RoomSummary } from '../../types/models';
 import { timeAgo } from '../../utils/helpers';
 import { Avatar } from '../ui/Avatar';
@@ -12,6 +13,7 @@ interface RoomCardProps {
 }
 
 export function RoomCard({ room, onJoin, onLeave, busy }: RoomCardProps) {
+  const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
   const copyCode = async () => {
@@ -37,7 +39,16 @@ export function RoomCard({ room, onJoin, onLeave, busy }: RoomCardProps) {
             flexShrink: 0,
           }}
         />
-        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <h3
+          style={{
+            margin: 0,
+            fontSize: 15,
+            fontWeight: 700,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
           {room.name}
         </h3>
       </div>
@@ -70,20 +81,39 @@ export function RoomCard({ room, onJoin, onLeave, busy }: RoomCardProps) {
       </button>
 
       <p className="muted" style={{ margin: 0, fontSize: 13 }}>
-        {room.memberCount} member{room.memberCount === 1 ? '' : 's'} · created {timeAgo(room.createdAt)}
+        {room.memberCount} member{room.memberCount === 1 ? '' : 's'} · created{' '}
+        {timeAgo(room.createdAt)}
       </p>
 
       <div className="flex items-center gap-2" style={{ marginTop: 'auto' }}>
         <Avatar name={room.owner.name} size="sm" />
-        <span className="muted" style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span
+          className="muted"
+          style={{
+            fontSize: 13,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
           {room.owner.name}
           {room.role && room.isMember && <span> · {room.role.toLowerCase()}</span>}
         </span>
-        <div style={{ marginLeft: 'auto' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
           {room.isMember ? (
-            <Button size="sm" variant="ghost" disabled={busy} onClick={() => onLeave(room)}>
-              Leave
-            </Button>
+            <>
+              <Button
+                size="sm"
+                variant="primary"
+                disabled={busy}
+                onClick={() => navigate(`/rooms/${room.id}`)}
+              >
+                Open
+              </Button>
+              <Button size="sm" variant="ghost" disabled={busy} onClick={() => onLeave(room)}>
+                Leave
+              </Button>
+            </>
           ) : (
             <Button size="sm" variant="primary" disabled={busy} onClick={() => onJoin(room)}>
               Join

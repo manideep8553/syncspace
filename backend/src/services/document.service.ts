@@ -80,8 +80,12 @@ export async function deleteDocument(documentId: string, userId: string) {
 
   const canDelete =
     document.ownerId === userId ||
-    (await prisma.workspace.findUnique({ where: { id: document.workspaceId }, select: { ownerId: true } }))
-      ?.ownerId === userId;
+    (
+      await prisma.workspace.findUnique({
+        where: { id: document.workspaceId },
+        select: { ownerId: true },
+      })
+    )?.ownerId === userId;
 
   if (!canDelete) {
     throw new ApiError(403, 'Only the document owner or workspace owner can delete this document');
@@ -91,7 +95,10 @@ export async function deleteDocument(documentId: string, userId: string) {
 }
 
 async function assertDocumentAccess(documentId: string, userId: string) {
-  const document = await prisma.document.findUnique({ where: { id: documentId }, select: { workspaceId: true } });
+  const document = await prisma.document.findUnique({
+    where: { id: documentId },
+    select: { workspaceId: true },
+  });
   if (!document) {
     throw new ApiError(404, 'Document not found');
   }
@@ -99,7 +106,10 @@ async function assertDocumentAccess(documentId: string, userId: string) {
 }
 
 async function assertWorkspaceAccess(workspaceId: string, userId: string) {
-  const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { id: true } });
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    select: { id: true },
+  });
   if (!workspace) {
     throw new ApiError(404, 'Workspace not found');
   }

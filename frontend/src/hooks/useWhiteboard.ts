@@ -66,5 +66,14 @@ export function useWhiteboard(docId: string): WhiteboardApi {
     [meta]
   );
 
-  return { shapes, background, addShape, updateShape, removeShape, clearShapes, setBackground, doc };
+  return {
+    shapes,
+    background,
+    addShape,
+    updateShape,
+    removeShape,
+    clearShapes,
+    setBackground,
+    doc,
+  };
 }

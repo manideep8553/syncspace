@@ -76,7 +76,10 @@ export function Whiteboard({ docId }: { docId: string }) {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')) {
+      if (
+        target &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')
+      ) {
         return;
       }
       if (event.key === 'Delete' || event.key === 'Backspace') {
@@ -129,7 +132,10 @@ export function Whiteboard({ docId }: { docId: string }) {
 
     if (tool === 'text') {
       const id = newShapeId();
-      addShape({ ...createDefaultShape('text', world.x, world.y, strokeColor, fillColor, strokeWidth), text: '' });
+      addShape({
+        ...createDefaultShape('text', world.x, world.y, strokeColor, fillColor, strokeWidth),
+        text: '',
+      });
       setEditingShapeId(id);
       setEditingText('');
       return;
@@ -346,7 +352,10 @@ export function Whiteboard({ docId }: { docId: string }) {
     return lines;
   }, [size, transform.zoom]);
 
-  const stageStyle = useMemo(() => ({ backgroundColor: background, cursor: tool === 'pan' ? 'grab' : 'default' }), [background, tool]);
+  const stageStyle = useMemo(
+    () => ({ backgroundColor: background, cursor: tool === 'pan' ? 'grab' : 'default' }),
+    [background, tool]
+  );
 
   return (
     <div style={{ position: 'relative', flex: 1, minHeight: 0, overflow: 'hidden' }}>
@@ -464,10 +473,16 @@ export function Whiteboard({ docId }: { docId: string }) {
           onBackground={setBackground}
           zoom={transform.zoom}
           onZoomIn={() =>
-            updateTransform({ ...transformRef.current, zoom: Math.min(4, transformRef.current.zoom * 1.2) })
+            updateTransform({
+              ...transformRef.current,
+              zoom: Math.min(4, transformRef.current.zoom * 1.2),
+            })
           }
           onZoomOut={() =>
-            updateTransform({ ...transformRef.current, zoom: Math.max(0.2, transformRef.current.zoom / 1.2) })
+            updateTransform({
+              ...transformRef.current,
+              zoom: Math.max(0.2, transformRef.current.zoom / 1.2),
+            })
           }
           onClear={handleClear}
           onExport={handleExport}

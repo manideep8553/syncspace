@@ -75,6 +75,21 @@ export interface PresenceUser {
   color: string;
 }
 
+export interface RoomMessage {
+  roomId: string;
+  user: PresenceUser;
+  text: string;
+  at: number;
+}
+
+export interface RoomBroadcastEvent {
+  roomId: string;
+  event: string;
+  data: unknown;
+  user: PresenceUser;
+  at: number;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
