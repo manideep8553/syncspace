@@ -619,6 +619,10 @@ button {
   margin-bottom: 16px;
 }
 
+.error-text {
+  color: #fca5a5;
+}
+
 .toolbar {
   display: flex;
   align-items: center;

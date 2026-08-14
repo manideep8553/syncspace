@@ -40,6 +40,13 @@ export function Sidebar() {
           <span>Home</span>
         </NavLink>
 
+        <NavLink
+          to="/rooms"
+          className={({ isActive }) => cn('sidebar-item', isActive && 'active')}
+        >
+          <span>Rooms</span>
+        </NavLink>
+
         <div className="sidebar-section" style={{ paddingTop: 18 }}>Workspaces</div>
         {workspaces.length === 0 && (
           <p className="faint" style={{ padding: '4px 12px', fontSize: 13 }}>

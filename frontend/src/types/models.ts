@@ -55,6 +55,18 @@ export interface WorkspaceDetail extends WorkspaceSummary {
   documentCount: number;
 }
 
+export interface RoomSummary {
+  id: string;
+  name: string;
+  code: string;
+  owner: PublicUser;
+  memberCount: number;
+  isMember: boolean;
+  role: MemberRole | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PresenceUser {
   userId: string;
   name: string;

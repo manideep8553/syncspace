@@ -30,6 +30,8 @@ model User {
   ownedWorkspaces Workspace[]      @relation("WorkspaceOwner")
   memberships     WorkspaceMember[]
   ownedDocuments  Document[]       @relation("DocumentOwner")
+  ownedRooms      Room[]            @relation("RoomOwner")
+  roomMemberships RoomMember[]
 
   @@map("users")
 }
@@ -77,4 +79,30 @@ model Document {
 
   @@index([workspaceId])
   @@map("documents")
+}
+
+model Room {
+  id        String       @id @default(cuid())
+  name      String
+  code      String       @unique
+  ownerId   String       @map("owner_id")
+  owner     User         @relation("RoomOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members   RoomMember[]
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  @@map("rooms")
+}
+
+model RoomMember {
+  id        String     @id @default(cuid())
+  roomId    String     @map("room_id")
+  room      Room       @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId    String     @map("user_id")
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      MemberRole @default(EDITOR)
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  @@unique([roomId, userId])
+  @@map("room_members")
 }

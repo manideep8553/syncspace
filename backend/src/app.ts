@@ -7,6 +7,7 @@ import { errorHandler, notFoundHandler } from './middleware/error.js';
 import { authenticate } from './middleware/authenticate.js';
 import authRouter from './routes/auth.routes.js';
 import documentRouter from './routes/document.routes.js';
+import roomRouter from './routes/room.routes.js';
 import workspaceRouter from './routes/workspace.routes.js';
 
 export function createApp(): express.Express {
@@ -26,6 +27,7 @@ export function createApp(): express.Express {
   });
 
   app.use('/api/auth', authRouter);
+  app.use('/api/rooms', authenticate, roomRouter);
   app.use('/api/workspaces', authenticate, workspaceRouter);
   app.use('/api/documents', authenticate, documentRouter);
 
