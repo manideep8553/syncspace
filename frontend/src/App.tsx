@@ -29,8 +29,8 @@ export default function App() {
                 <Route path="rooms/:roomId" element={<RoomPage />} />
                 <Route path="w/:workspaceId" element={<WorkspacePage />} />
               </Route>
-              <Route path="doc/:documentId" element={<CodeEditorPage />} />
-              <Route path="board/:documentId" element={<WhiteboardPage />} />
+<Route path="doc/:documentId" element={<CodeEditorPage />} />
+                <Route path="board/:documentId" element={<WhiteboardPage />} />
             </Route>
 
             <Route path="*" element={<NotFoundPage />} />

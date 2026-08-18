@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { CodeEditor } from '../components/editor/CodeEditor';
+import { Whiteboard } from '../components/whiteboard/Whiteboard';
 import { PresenceBar } from '../components/editor/PresenceBar';
 import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
@@ -82,55 +83,59 @@ export function CodeEditorPage() {
       style={{
         height: '100%',
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'row',
         background: '#0d1117',
       }}
     >
-      <div className="topbar">
-        <Link to={`/w/${document.workspace.id}`} className="btn btn-ghost btn-sm">
-          ← {document.workspace.name}
-        </Link>
-        <input
-          className="topbar-title-input"
-          value={title}
-          onChange={(e) => {
-            setTitle(e.target.value);
-            saveTitle(e.target.value);
-          }}
-          aria-label="Document title"
-        />
-        <div className="divider-v" />
-        <PresenceBar />
-        <div className="spacer" />
-        <Button variant="ghost" size="sm" onClick={handleCopy}>
-          {copied ? 'Copied!' : 'Share'}
-        </Button>
-        {isOwner && (
-          <Button variant="danger" size="sm" onClick={() => setShowDelete(true)}>
-            Delete
-          </Button>
-        )}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+        <Whiteboard docId={document.id} />
       </div>
-
-      <div style={{ display: 'flex', width: '100%', height: '100%', flex: 1 }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         <CodeEditor docId={document.id} />
       </div>
-
-      <Modal
-        open={showDelete}
-        onClose={() => setShowDelete(false)}
-        title="Delete document?"
-        subtitle="The code in this document will be permanently removed."
-      >
-        <div className="modal-actions">
-          <Button variant="ghost" onClick={() => setShowDelete(false)}>
-            Cancel
+      <div style={{ padding: 12 }}>
+        <div className="topbar">
+          <Link to={`/w/${document.workspace.id}`} className="btn btn-ghost btn-sm">
+            ← {document.workspace.name}
+          </Link>
+          <input
+            className="topbar-title-input"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              saveTitle(e.target.value);
+            }}
+            aria-label="Document title"
+          />
+          <div className="divider-v" />
+          <PresenceBar />
+          <div className="spacer" />
+          <Button variant="ghost" size="sm" onClick={handleCopy}>
+            {copied ? 'Copied!' : 'Share'}
           </Button>
-          <Button variant="danger" onClick={handleDelete}>
-            Delete
-          </Button>
+          {isOwner && (
+            <Button variant="danger" size="sm" onClick={() => setShowDelete(true)}>
+              Delete
+            </Button>
+          )}
         </div>
-      </Modal>
+
+        <Modal
+          open={showDelete}
+          onClose={() => setShowDelete(false)}
+          title="Delete document?"
+          subtitle="The code in this document will be permanently removed."
+        >
+          <div className="modal-actions">
+            <Button variant="ghost" onClick={() => setShowDelete(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleDelete}>
+              Delete
+            </Button>
+          </div>
+        </Modal>
+      </div>
     </div>
   );
 }
