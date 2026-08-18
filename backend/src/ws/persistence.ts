@@ -3,6 +3,7 @@ import { setContentInitializor } from 'y-websocket/bin/utils';
 import { prisma } from '../db.js';
 import { decodeBytes, encodeBytes } from '../utils/base64.js';
 import { parseRoomName } from '../utils/rooms.js';
+import { ioServer } from './socketServer.js';
 
 const SAVE_DEBOUNCE_MS = 1500;
 
@@ -11,7 +12,7 @@ interface PendingSave {
   ydoc: Y.Doc;
 }
 
-const pendingSaves = new Map<string, PendingSave>();
+const pendingSaves = new Map<string, PendingSave>;
 
 /**
  * Initializes the Yjs persistence pipeline.
@@ -20,6 +21,8 @@ const pendingSaves = new Map<string, PendingSave>();
  * the shared y-websocket room registry. We use it to (1) hydrate the CRDT from
  * the latest state stored in PostgreSQL and (2) attach an observer that
  * debounce-persists every subsequent change back to the database.
+ * Additionally, we broadcast Yjs updates via Socket.IO so that all connected
+ * clients can synchronize their state.
  */
 export function configureDocumentPersistence(): void {
   setContentInitializor(async (ydoc) => {
@@ -27,6 +30,32 @@ export function configureDocumentPersistence(): void {
     await hydrateFromDatabase(roomName, ydoc);
     ydoc.on('update', () => scheduleSave(roomName, ydoc));
   });
+}
+
+function scheduleSave(roomName: string, ydoc: Y.Doc): void {
+  const parsed = parseRoomName(roomName);
+  if (!parsed) return;
+
+  const io = ioServer;
+  if (io) {
+    const update = Y.encodeStateAsUpdate(ydoc);
+    io.to(`room:${parsed.docId}`).emit('ydoc:update', {
+      docId: parsed.docId,
+      update,
+    });
+  }
+
+  const existing = pendingSaves.get(roomName);
+  if (existing) {
+    clearTimeout(existing.timer);
+  }
+
+  const timer = setTimeout(() => {
+    pendingSaves.delete(roomName);
+    void persistRoom(roomName, ydoc);
+  }, SAVE_DEBOUNCE_MS);
+
+  pendingSaves.set(roomName, { timer, ydoc });
 }
 
 async function hydrateFromDatabase(roomName: string, ydoc: Y.Doc): Promise<void> {
@@ -45,20 +74,6 @@ async function hydrateFromDatabase(roomName: string, ydoc: Y.Doc): Promise<void>
   } catch (error) {
     console.error(`[yjs] failed to hydrate room "${roomName}":`, error);
   }
-}
-
-function scheduleSave(roomName: string, ydoc: Y.Doc): void {
-  const existing = pendingSaves.get(roomName);
-  if (existing) {
-    clearTimeout(existing.timer);
-  }
-
-  const timer = setTimeout(() => {
-    pendingSaves.delete(roomName);
-    void persistRoom(roomName, ydoc);
-  }, SAVE_DEBOUNCE_MS);
-
-  pendingSaves.set(roomName, { timer, ydoc });
 }
 
 async function persistRoom(roomName: string, ydoc: Y.Doc): Promise<void> {

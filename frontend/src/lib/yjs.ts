@@ -1,5 +1,6 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
+import { getSocket } from './socket';
 import { getToken } from './http';
 import type { RoomKind } from '../types/models';
 
@@ -36,7 +37,37 @@ export function getCollaborativeInstance(docId: string, kind: RoomKind): Collabo
 
   const instance: CollaborativeInstance = { doc, provider };
   instances.set(key, instance);
+
+  // Set up Socket.IO sync for Yjs updates (using existing authenticated socket)
+  setupYdocSocketSync(doc, docName);
+
   return instance;
+}
+
+/**
+ * Sets up Socket.IO event listeners to synchronize Yjs document updates.
+ * Listens for 'ydoc:update' events from the backend and applies them
+ * to the Y.Doc using CRDT-aware applyUpdate.
+ */
+function setupYdocSocketSync(doc: Y.Doc, docName: string): void {
+  const socket = getSocket();
+  if (!socket) return;
+
+  const parsed = docName.split('-');
+  const roomDocId = parsed[1];
+
+  if (!roomDocId) return;
+
+  // Listen for Yjs update broadcasts from backend via Socket.IO
+  socket.on('ydoc:update', (payload: { docId: string; update: Uint8Array }) => {
+    if (payload.docId === roomDocId) {
+      try {
+        Y.applyUpdate(doc, payload.update as Uint8Array);
+      } catch (error) {
+        console.error('[yjs] failed to apply Socket.IO update:', error);
+      }
+    }
+  });
 }
 
 export function disconnectAllCollaborativeInstances(): void {

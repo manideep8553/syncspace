@@ -4,6 +4,11 @@ import { prisma } from '../db.js';
 import { env } from '../env.js';
 import { verifyAccessToken } from '../utils/jwt.js';
 
+const assertIoServer = (): IOServer => {
+  if (!ioServer) throw new Error('Socket.IO server not initialized');
+  return ioServer;
+};
+
 export interface PresenceUser {
   userId: string;
   name: string;
@@ -53,12 +58,16 @@ export function colorForUser(userId: string): string {
   return avatarColors[hash % avatarColors.length];
 }
 
+let ioServer: IOServer | null = null;
+
+export { ioServer };
+
 export function attachSocketServer(server: http.Server): IOServer {
-  const io = new IOServer(server, {
+  ioServer = new IOServer(server, {
     cors: { origin: env.CLIENT_URL, credentials: true },
   });
 
-  io.use((socket, next) => {
+  ioServer.use((socket, next) => {
     try {
       const token = socket.handshake.auth?.token as string | undefined;
       if (!token) {
@@ -72,7 +81,7 @@ export function attachSocketServer(server: http.Server): IOServer {
     }
   });
 
-  io.on('connection', async (socket) => {
+  ioServer.on('connection', async (socket) => {
     const data = socket.data as SocketData;
     data.roomIds = new Set<string>();
     const user = await prisma.user.findUnique({
@@ -114,7 +123,7 @@ export function attachSocketServer(server: http.Server): IOServer {
       await socket.join(`doc:${docId}`);
       ack?.(true);
 
-      socket.emit('presence:list', await getPeers(io, docId));
+      socket.emit('presence:list', await getPeers(docId));
       socket.to(`doc:${docId}`).emit('presence:joined', presence);
     });
 
@@ -170,7 +179,7 @@ export function attachSocketServer(server: http.Server): IOServer {
       await socket.join(`room:${roomId}`);
       ack?.(true);
 
-      socket.emit('room:members', { roomId, members: await getRoomMembers(io, roomId) });
+      socket.emit('room:members', { roomId, members: await getRoomMembers(roomId) });
       socket.to(`room:${roomId}`).emit('room:member_joined', { roomId, user: data.presence });
     });
 
@@ -202,7 +211,7 @@ export function attachSocketServer(server: http.Server): IOServer {
         text: text.slice(0, 4000),
         at: Date.now(),
       };
-      io.to(`room:${roomId}`).emit('room:message', message);
+      assertIoServer().to(`room:${roomId}`).emit('room:message', message);
     });
 
     socket.on('room:broadcast', (payload: { roomId?: string; event?: string; data?: unknown }) => {
@@ -218,7 +227,7 @@ export function attachSocketServer(server: http.Server): IOServer {
         user: data.presence!,
         at: Date.now(),
       };
-      io.to(`room:${roomId}`).emit('room:broadcast', event);
+      assertIoServer().to(`room:${roomId}`).emit('room:broadcast', event);
     });
 
     socket.on('disconnect', () => {
@@ -228,24 +237,24 @@ export function attachSocketServer(server: http.Server): IOServer {
           socket.to(`doc:${docId}`).emit('presence:left', data.presence);
         }
         for (const roomId of data.roomIds) {
-          io.to(`room:${roomId}`).emit('room:member_left', { roomId, user: data.presence });
+          assertIoServer().to(`room:${roomId}`).emit('room:member_left', { roomId, user: data.presence });
         }
       }
     });
   });
 
-  return io;
+  return ioServer;
 }
 
-async function getPeers(io: IOServer, docId: string): Promise<PresenceUser[]> {
-  const sockets = await io.in(`doc:${docId}`).fetchSockets();
+async function getPeers(docId: string): Promise<PresenceUser[]> {
+  const sockets = await assertIoServer().in(`doc:${docId}`).fetchSockets();
   return sockets
     .map((socket) => (socket.data as SocketData).presence)
     .filter((presence): presence is PresenceUser => presence !== undefined);
 }
 
-async function getRoomMembers(io: IOServer, roomId: string): Promise<PresenceUser[]> {
-  const sockets = await io.in(`room:${roomId}`).fetchSockets();
+async function getRoomMembers(roomId: string): Promise<PresenceUser[]> {
+  const sockets = await assertIoServer().in(`room:${roomId}`).fetchSockets();
   return sockets
     .map((socket) => (socket.data as SocketData).presence)
     .filter((presence): presence is PresenceUser => presence !== undefined);
