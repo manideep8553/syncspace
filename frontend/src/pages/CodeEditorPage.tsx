@@ -112,7 +112,9 @@ export function CodeEditorPage() {
         )}
       </div>
 
-      <CodeEditor docId={document.id} />
+      <div style={{ display: 'flex', width: '100%', height: '100%', flex: 1 }}>
+        <CodeEditor docId={document.id} />
+      </div>
 
       <Modal
         open={showDelete}

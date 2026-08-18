@@ -11,7 +11,7 @@ interface CodeEditorProps {
 export function CodeEditor({ docId }: CodeEditorProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
-  const [language, setLanguage] = useState('typescript');
+  const [language, setLanguage] = useState<'typescript' | 'javascript' | 'python' | 'java'>('typescript');
 
   const { doc, provider } = useCollaborativeDoc(docId, 'code');
 
@@ -48,10 +48,13 @@ export function CodeEditor({ docId }: CodeEditorProps) {
     const syncLanguage = () => {
       const stored = yMeta.get('language');
       const next = typeof stored === 'string' ? stored : 'typescript';
-      if (monaco.languages.getLanguages().some((entry) => entry.id === next)) {
-        monaco.editor.setModelLanguage(model, next);
+      const validNext = monaco.languages.getLanguages().some((entry) => entry.id === next)
+        ? (next as 'typescript' | 'javascript' | 'python' | 'java')
+        : 'typescript';
+      if (monaco.languages.getLanguages().some((entry) => entry.id === validNext)) {
+        monaco.editor.setModelLanguage(model, validNext);
       }
-      setLanguage(next);
+      setLanguage(validNext);
     };
     syncLanguage();
     yMeta.observe(syncLanguage);
@@ -65,7 +68,7 @@ export function CodeEditor({ docId }: CodeEditorProps) {
     };
   }, [doc, docId, provider]);
 
-  const changeLanguage = (next: string) => {
+  const changeLanguage = (next: 'typescript' | 'javascript' | 'python' | 'java') => {
     const model = editorRef.current?.getModel();
     if (model) {
       monaco.editor.setModelLanguage(model, next);
@@ -75,16 +78,14 @@ export function CodeEditor({ docId }: CodeEditorProps) {
   };
 
   return (
-    <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
-      <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />
+    <div style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+      <div ref={containerRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
       <select
         className="input"
         value={language}
-        onChange={(e) => changeLanguage(e.target.value)}
+        onChange={(e) => changeLanguage(e.target.value as 'typescript' | 'javascript' | 'python' | 'java')}
         style={{
-          position: 'absolute',
-          top: 10,
-          right: 14,
+          margin: '10px',
           width: 150,
           zIndex: 10,
           fontSize: 12,
